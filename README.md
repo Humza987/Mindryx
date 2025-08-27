@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Mindryx Logo](public/Mindryx_logo.png)
+![Mindryx Logo](frontend/public/Mindryx_logo.png)
 
 **A serverless quiz generation platform powered by AI**
 
@@ -59,13 +59,13 @@ Mindryx is a **learning-focused quiz and AI study platform** that demonstrates m
 ## Illustrations
 
 
-![Preview](public/Preview.png)
+![Preview](frontend/public/Preview.png)
 
-![Quiz Generation](public/Quiz_Generation.png)
+![Quiz Generation](frontend/public/Quiz_Generation.png)
 
-![Quiz Example](public/Quiz_Example.png)
+![Quiz Example](frontend/public/Quiz_Example.png)
 
-![Chatbot Page](public/Chatbot_Page.png)
+![Chatbot Page](frontend/public/Chatbot_Page.png)
 
 ---
 
@@ -73,7 +73,7 @@ Mindryx is a **learning-focused quiz and AI study platform** that demonstrates m
 
 Mindryx demonstrates **modern serverless arhictecture** using a locally-emulated AWS stack:
 
-![Simplified LocalStack AWS Emulation Architecture Diagram](public/diagram.png)
+![Simplified LocalStack AWS Emulation Architecture Diagram](frontend/public/public/diagram.png)
 
 **Powered by LocalStack** for cost-free experimentation and rapid development.
 
