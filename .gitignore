@@ -1,0 +1,63 @@
+# ---------------------
+# Global ignores
+# ---------------------
+.DS_Store
+*.log
+*.tmp
+*.swp
+*.pyc
+__pycache__/
+
+# ---------------------
+# Python / Backend
+# ---------------------
+
+# Ignore caches and coverage
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/*.egg-info/
+backend/.env/
+
+# Ignore Lambda build artifacts
+backend/lambdas/**/function.zip
+backend/lambdas/**/__pycache__/
+
+# Ignore everything inside each lambda function directory
+backend/lambdas/*/*
+
+# But keep these specific files
+!backend/lambdas/*/handler.py
+!backend/lambdas/*/requirements.txt
+
+
+# ---------------------
+# Node / Frontend
+# ---------------------
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/.vercel/
+frontend/out/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.env
+
+# ---------------------
+# Virtual Environments (anywhere)
+# ---------------------
+venv/
+
+# ---------------------
+# Docker / env files
+# ---------------------
+*.pid
+*.seed
+*.bak
+.env        
+
+# ---------------------
+# Other files
+# ---------------------
+api-endpoints
