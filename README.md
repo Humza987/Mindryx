@@ -114,8 +114,6 @@ This script will:
 ### 3. Configure Frontend
 
 ```bash
-npm install
-
 # Create .env.local with your credentials
 cat > .env.local << EOF
 NEXT_PUBLIC_API_ID=oh72zg4c5u
@@ -129,8 +127,7 @@ EOF
 ### 4. Launch Development Server
 
 ```bash
-npm install 
-
+npm install
 npm run dev
 ```
 
