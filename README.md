@@ -73,7 +73,7 @@ Mindryx is a **learning-focused quiz and AI study platform** that demonstrates m
 
 Mindryx demonstrates **modern serverless arhictecture** using a locally-emulated AWS stack:
 
-![Simplified LocalStack AWS Emulation Architecture Diagram](frontend/public/public/diagram.png)
+![Simplified LocalStack AWS Emulation Architecture Diagram](frontend/public/diagram.png)
 
 **Powered by LocalStack** for cost-free experimentation and rapid development.
 
