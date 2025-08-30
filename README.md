@@ -34,9 +34,9 @@ Mindryx is a **learning-focused quiz and AI study platform** that demonstrates m
 - ⚠️ **Not production-ready** - designed for learning and tinkering
 
 **Planned Production Branch:**
-- 🎯 **Vercel** deployment with Serverless Functions via **Flask**
+- 🎯 **Vercel** deployment with Supabase Serverless Edge Functions (Deno)
 - 🗄️ **Supabase** PostgreSQL database
-- 🔐 Server-side authentication for API route protection
+- 🔐 Server-side authentication for API route protection (Clerk Auth)
 - 🚀 Production-optimized performance and security
 
 ---
@@ -212,9 +212,9 @@ curl -X POST "http://localhost:4566/restapis/oh72zg4c5u/dev/_user_request_/quiz"
 ### Production Branch (Planned)
 - **Purpose:** Production-ready deployment
 - **Frontend:** Vercel deployment
-- **Backend:** Vercel Serverless Functions via Flask
+- **Backend:** Supabase Serverless Edge Functions (Deno)
 - **Database:** Supabase PostgreSQL
-- **Authentication:** Server-side API route protection
+- **Authentication:** Server-side API route protection (Clerk)
 - **Additional Features:** Enhanced security, monitoring, and performance optimizations
 
 ---
