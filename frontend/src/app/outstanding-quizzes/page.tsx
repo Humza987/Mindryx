@@ -1,7 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Clock, BookOpen, ArrowRight, RefreshCw, PlusCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Clock,
+  BookOpen,
+  ArrowRight,
+  RefreshCw,
+  PlusCircle,
+  AlertCircle,
+} from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 interface OutstandingQuiz {
   quizId: string;
@@ -17,46 +25,46 @@ interface OutstandingQuizzesResponse {
 }
 
 export default function OutstandingQuizzesPage() {
-  const API_ID = process.env.NEXT_PUBLIC_API_ID;
-
-  const [outstandingQuizzes, setOutstandingQuizzes] = useState<OutstandingQuiz[]>([]);
+  const { user, isLoaded } = useUser();
+  const [outstandingQuizzes, setOutstandingQuizzes] = useState<
+    OutstandingQuiz[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadOutstandingQuizzes = async (isRefresh = false) => {
+    if (!isLoaded || !user) return;
+
     if (isRefresh) {
       setRefreshing(true);
     } else {
       setLoading(true);
     }
-    
+
     setError(null);
 
     try {
-      const userId = localStorage.getItem('userId') || 'anonymous';
-      
-      const response = await fetch(
-        `http://localhost:4566/restapis/${API_ID}/dev/_user_request_/outstanding-quizzes?userId=${userId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await fetch(`/api/getOutstandingQuizzes`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to load outstanding quizzes: ${response.status}`);
+        throw new Error(
+          `Failed to load outstanding quizzes: ${response.status}`
+        );
       }
 
       const data: OutstandingQuizzesResponse = await response.json();
-      console.log('Outstanding quizzes data:', data);
+      console.log("Outstanding quizzes data:", data);
 
       setOutstandingQuizzes(data.outstandingQuizzes || []);
     } catch (error) {
-      console.error('Error loading outstanding quizzes:', error);
-      setError('Failed to load outstanding quizzes');
+      console.error("Error loading outstanding quizzes:", error);
+      setError("Failed to load outstanding quizzes");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -64,61 +72,62 @@ export default function OutstandingQuizzesPage() {
   };
 
   useEffect(() => {
-    loadOutstandingQuizzes();
-  }, [API_ID]);
+    if (isLoaded && user) {
+      loadOutstandingQuizzes();
+    }
+  }, [isLoaded, user]);
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'Unknown date';
-  
-  try {
-    let date: Date;
-    
-    if (dateString.endsWith('Z')) {
-      // Already has UTC marker
-      date = new Date(dateString);
-    } else if (dateString.includes('T') && !dateString.endsWith('Z')) {
-      // ISO format but missing Z
-      date = new Date(dateString + 'Z');
-    } else if (dateString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-      // "YYYY-MM-DD HH:mm:ss" format - FORCE as UTC
-      date = new Date(dateString.replace(' ', 'T') + 'Z');
-    } else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Just date - assume midnight UTC
-      date = new Date(dateString + 'T00:00:00Z');
-    } else {
-      // Last resort - try to force UTC
-      date = new Date(dateString + (dateString.includes('T') ? 'Z' : 'T00:00:00Z'));
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Unknown date";
+
+    try {
+      // Remove microseconds if present (JS only supports milliseconds)
+      let normalizedDateString = dateString.replace(/\.(\d{3})\d+/, ".$1");
+
+      // Ensure timezone offset is in a format JS can handle
+      if (
+        normalizedDateString.endsWith("Z") === false &&
+        /\+\d{2}:\d{2}/.test(normalizedDateString)
+      ) {
+        // Keep as-is, JS can parse '+00:00' offsets
+      } else if (
+        normalizedDateString.includes("T") &&
+        !normalizedDateString.endsWith("Z")
+      ) {
+        normalizedDateString += "Z"; // Assume UTC if no timezone
+      }
+
+      const date = new Date(normalizedDateString);
+
+      if (isNaN(date.getTime())) return "Invalid date";
+
+      const options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZoneName: "short",
+      };
+
+      return date.toLocaleDateString("en-US", options);
+    } catch (error) {
+      console.error("Date parsing error:", error);
+      return "Invalid date";
     }
-    
-    // Check if the date is valid
-    if (isNaN(date.getTime())) {
-      return 'Invalid date';
-    }
-    
-    // Format the date in the user's local timezone
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZoneName: 'short'
-    };
-    
-    return date.toLocaleDateString('en-US', options);
-  } catch (error) {
-    console.error('Date parsing error:', error);
-    return 'Invalid date';
-  }
-};
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'hard': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "easy":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "hard":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -130,7 +139,7 @@ const formatDate = (dateString: string) => {
     loadOutstandingQuizzes(true);
   };
 
-  if (loading) {
+  if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -161,11 +170,13 @@ const formatDate = (dateString: string) => {
                 disabled={refreshing}
                 className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                {refreshing ? 'Refreshing...' : 'Refresh'}
+                <RefreshCw
+                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+                />
+                {refreshing ? "Refreshing..." : "Refresh"}
               </button>
               <button
-                onClick={() => window.location.href = '/quiz/new'}
+                onClick={() => (window.location.href = "/quiz/new")}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
               >
                 <PlusCircle className="w-4 h-4" />
@@ -205,7 +216,9 @@ const formatDate = (dateString: string) => {
                     {outstandingQuizzes.length}
                   </h2>
                   <p className="text-blue-100">
-                    {outstandingQuizzes.length === 1 ? 'Quiz Waiting' : 'Quizzes Waiting'}
+                    {outstandingQuizzes.length === 1
+                      ? "Quiz Waiting"
+                      : "Quizzes Waiting"}
                   </p>
                 </div>
                 <BookOpen className="w-12 h-12 text-blue-200" />
@@ -223,7 +236,7 @@ const formatDate = (dateString: string) => {
                   You're all caught up! All your quizzes have been completed.
                 </p>
                 <button
-                  onClick={() => window.location.href = '/quiz/new'}
+                  onClick={() => (window.location.href = "/quiz/new")}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
                 >
                   Create New Quiz
@@ -244,11 +257,15 @@ const formatDate = (dateString: string) => {
                             <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                               {quiz.topic} Quiz
                             </h3>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getDifficultyColor(quiz.difficulty)}`}>
+                            <span
+                              className={`px-3 py-1 rounded-full text-sm font-medium border ${getDifficultyColor(
+                                quiz.difficulty
+                              )}`}
+                            >
                               {quiz.difficulty}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
@@ -260,17 +277,21 @@ const formatDate = (dateString: string) => {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900">Ready to Take</p>
-                            <p className="text-xs text-gray-600">Click to start</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              Ready to Take
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              Click to start
+                            </p>
                           </div>
                           <ArrowRight className="w-6 h-6 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200" />
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Bottom border for visual separation */}
                     <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-b-xl"></div>
                   </div>
@@ -282,13 +303,13 @@ const formatDate = (dateString: string) => {
             <div className="mt-8 text-center">
               <div className="inline-flex gap-4">
                 <button
-                  onClick={() => window.location.href = '/past-quizzes'}
+                  onClick={() => (window.location.href = "/past-quizzes")}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors duration-200"
                 >
                   View Past Quizzes
                 </button>
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => (window.location.href = "/")}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
                 >
                   Back to Home

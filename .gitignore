@@ -7,6 +7,7 @@
 *.swp
 *.pyc
 __pycache__/
+.vscode/
 
 # ---------------------
 # Python / Backend

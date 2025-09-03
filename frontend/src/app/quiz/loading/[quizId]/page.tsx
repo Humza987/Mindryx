@@ -1,80 +1,95 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSupabase } from "@/utils/supabase-provider";
+import { useUser } from "@clerk/nextjs";
 
-export default function QuizLoading() {
-  const API_ID = process.env.NEXT_PUBLIC_API_ID;
+interface PageProps {
+  params: Promise<{ quizId: string }>;
+}
+
+export default function QuizLoading({ params }: PageProps) {
+  const { supabase, isLoaded } = useSupabase();
+  const { user } = useUser();
 
   const [loadingMessage, setLoadingMessage] = useState(
     "Generating your quiz… this might take a minute. Hang tight!"
   );
-  const [progressDots, setProgressDots] = useState('');
+  const [progressDots, setProgressDots] = useState("");
+  const [error, setError] = useState<string>("");
+  const [quizId, setQuizId] = useState<string>("");
   const router = useRouter();
-  const params = useParams();
-  const quizId = params.quizId;
 
   useEffect(() => {
+    const initializeParams = async () => {
+      try {
+        const resolvedParams = await params;
+        setQuizId(resolvedParams.quizId);
+      } catch (error) {
+        console.error("Error resolving params:", error);
+        setError("Failed to load quiz parameters");
+      }
+    };
+
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!isLoaded || !supabase || !user || !quizId) return;
+
     const interval = setInterval(() => {
-      setProgressDots((prev) => (prev.length < 3 ? prev + '.' : ''));
+      setProgressDots((prev) => (prev.length < 3 ? prev + "." : ""));
     }, 500);
 
     const pollQuiz = async () => {
-      if (!quizId) return;
-      
       try {
-        const userId = localStorage.getItem('userId') || 'anonymous';
-        
-        const res = await fetch(
-          `http://localhost:4566/restapis/${API_ID}/dev/_user_request_/quiz/${quizId}?userId=${userId}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        const res = await fetch(`/api/getQuiz?quizId=${quizId}`);
+        const result = await res.json();
 
-        if (res.ok) {
-          const data = await res.json();
-          console.log('Quiz poll result:', data);
-          
-          if (data.status === 'READY') {
-            console.log('Quiz is ready! Redirecting...');
-            router.replace(`/quiz/${quizId}`);
-          } else {
-            console.log('Quiz not ready yet, status:', data.status);
-            if (data.status === 'GENERATING') {
-              setLoadingMessage("AI is crafting your questions...");
-            } else if (data.status === 'PROCESSING') {
-              setLoadingMessage("Finalizing your quiz...");
-            }
-          }
-        } else {
-          console.error('Failed to fetch quiz:', res.status, res.statusText);
-          if (res.status === 404) {
-            setLoadingMessage("Quiz not found. Please try creating a new one.");
-          }
+        if (!result.data) {
+          setLoadingMessage("AI is crafting your questions...");
+          return;
         }
+
+        console.log("Quiz ready:", result.data);
+        router.replace(`/quiz/${quizId}`);
       } catch (err) {
-        console.error('Error polling quiz:', err);
+        console.error("Error polling quiz:", err);
+        setError("Having trouble connecting. Please wait...");
         setLoadingMessage("Having trouble connecting. Please wait...");
       }
     };
 
-    const pollInterval = setInterval(pollQuiz, 2000);
+    // Initial poll
     pollQuiz();
+
+    // Poll every 5 seconds ✅
+    const pollInterval = setInterval(pollQuiz, 5000);
 
     return () => {
       clearInterval(interval);
       clearInterval(pollInterval);
     };
-  }, [quizId, router]);
+  }, [quizId, router, supabase, isLoaded, user]);
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
+        <div className="bg-white shadow-lg rounded-xl p-8 max-w-md text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
       <div className="bg-white shadow-lg rounded-xl p-8 max-w-md text-center">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">Your Quiz is on its Way!</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+          Your Quiz is on its Way!
+        </h1>
         <p className="text-gray-900 mb-6">
           {loadingMessage}
           <span>{progressDots}</span>
@@ -86,9 +101,18 @@ export default function QuizLoading() {
           AI is carefully generating questions for you. Almost there…
         </p>
         {quizId && (
-          <p className="text-xs text-gray-600 mt-2">
-            Quiz ID: {quizId}
-          </p>
+          <p className="text-xs text-gray-600 mt-2">Quiz ID: {quizId}</p>
+        )}
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-700">{error}</p>
+            <button
+              onClick={() => (window.location.href = "/quiz/new")}
+              className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Try creating a new quiz
+            </button>
+          </div>
         )}
       </div>
     </div>
