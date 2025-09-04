@@ -6,16 +6,16 @@ import Link from "next/link";
 import React from "react";
 
 export default function Home() {
-  const { user, isLoaded } = useUser(); // Add isLoaded
-  const [isClientLoaded, setIsClientLoaded] = useState(false);
+  const { user, isLoaded } = useUser(); // Add isLoaded to track loading state
+  const [isClient, setIsClient] = useState(false);
 
-  // Ensure client-side hydration is complete
+  // Ensure we're on client side to prevent hydration mismatch
   useEffect(() => {
-    setIsClientLoaded(true);
+    setIsClient(true);
   }, []);
 
-  // Show loading state until both Clerk and client are loaded
-  if (!isLoaded || !isClientLoaded) {
+  // Show loading state while Clerk is initializing
+  if (!isClient || !isLoaded) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 bg-slate-50">
         <div className="text-center">
@@ -34,12 +34,6 @@ export default function Home() {
             Mindryx
             <span className="text-blue-600"> — Study Smarter</span>
           </h1>
-
-          {user && (
-            <p className="mt-2 text-center text-green-600 font-medium">
-              Welcome back, {user.firstName || user.emailAddresses[0].emailAddress}! 👋
-            </p>
-          )}
 
           <p className="mt-2 text-gray-600">
             Quickly create practice quizzes from topics or PDFs, review results,
@@ -112,31 +106,19 @@ export default function Home() {
             Quick actions
           </h2>
           <div className="flex flex-col sm:flex-row gap-3">
-            {user ? (
-              // Show authenticated user actions
-              <>
-                <Link
-                  href="/quiz/new"
-                  className="inline-flex items-center justify-center bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition"
-                >
-                  🚀 Start a Quiz
-                </Link>
-                <Link
-                  href="/chatbot"
-                  className="inline-flex items-center justify-center border border-gray-200 px-5 py-3 rounded-lg hover:bg-gray-50 transition text-gray-800"
-                >
-                  🧠 Try Local AI Chat - Powered by WebLLM
-                </Link>
-              </>
-            ) : (
-              // Show sign-in button for unauthenticated users
-              <Link
-                href="/sign-in"
-                className="inline-flex items-center justify-center bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition"
-              >
-                🚀 Get Started
-              </Link>
-            )}
+            <Link
+              href="/quiz/new"
+              className="inline-flex items-center justify-center bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition"
+            >
+              🚀 Start a Quiz
+            </Link>
+
+            <Link
+              href="/chatbot"
+              className="inline-flex items-center justify-center border border-gray-200 px-5 py-3 rounded-lg hover:bg-gray-50 transition text-gray-800"
+            >
+              🧠 Try Local AI Chat - Powered by WebLLM
+            </Link>
           </div>
         </section>
 
