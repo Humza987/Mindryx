@@ -1,13 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
-import React from "react"; // Add this import
+import React from "react";
 
-// Simplest solution: Remove explicit return type
 export default function Home() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser(); // Add isLoaded to track loading state
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure we're on client side to prevent hydration mismatch
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading state while Clerk is initializing
+  if (!isClient || !isLoaded) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 bg-slate-50">
